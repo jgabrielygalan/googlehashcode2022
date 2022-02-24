@@ -41,9 +41,10 @@ public class ProjectAssignmentResolver {
 					    .map(tuple -> tuple.getContributor().getName())
 					    .toList();
 					final AssignedProject assignedProject = new AssignedProject(project, orderedContributors);
+					assignedProjects.add(assignedProject);
 				}
 			}
-			day++; // optimizar cuantos dias anadir
+			day = willBeFreed.keySet().stream().min(Integer::compareTo).get();
 			
 		}
 		return assignedProjects;
