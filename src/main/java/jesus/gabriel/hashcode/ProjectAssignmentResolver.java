@@ -1,6 +1,7 @@
 package jesus.gabriel.hashcode;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -8,7 +9,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import jesus.gabriel.hashcode.model.AssignedProject;
 import jesus.gabriel.hashcode.model.Contributor;
 import jesus.gabriel.hashcode.model.Project;
@@ -19,20 +19,34 @@ import lombok.Value;
 public class ProjectAssignmentResolver {
 
 	public Set<AssignedProject> assignContributors(TupleProjectsContributors input) {
+	  final Set<AssignedProject> assignedProjects = new HashSet<>();
 		Set<Project> pending = input.getProjects();
 		Set<Contributor> available = input.getContributors();
 		Map<Integer, Set<Contributor>> willBeFreed = new HashMap<>();
-		Integer day = 0;
+		int day = 0;
 		while(pending.size() > 0) {
+		  final Set<Contributor> contributorsToFree = willBeFreed.remove(day);
+		  if (contributorsToFree != null) {
+		    available.addAll(contributorsToFree);
+		  }
+		  
 			List<Project> projects = sortProjects(pending);
 			for (Project project: projects) {
 				Set<TupleAssignment> asignees = findContributorsFor(project, available);
 				if (asignees.size() > 0) {
 					assignContributors(day, project, asignees, willBeFreed);
+					pending.remove(project);
+					final List<String> orderedContributors = asignees.stream()
+					    .sorted(Comparator.comparing(TupleAssignment::getIndex))
+					    .map(tuple -> tuple.getContributor().getName())
+					    .toList();
+					final AssignedProject assignedProject = new AssignedProject(project, orderedContributors);
 				}
 			}
+			day++; // optimizar cuantos dias anadir
 			
 		}
+		return assignedProjects;
 	}
 
 	private List<Project> sortProjects(Set<Project> pending) {
