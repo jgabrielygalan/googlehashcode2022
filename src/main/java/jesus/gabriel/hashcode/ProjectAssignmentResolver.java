@@ -1,6 +1,7 @@
 package jesus.gabriel.hashcode;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,76 +19,127 @@ import lombok.Value;
 
 public class ProjectAssignmentResolver {
 
-	public Set<AssignedProject> assignContributors(TupleProjectsContributors input) {
-	  final Set<AssignedProject> assignedProjects = new HashSet<>();
+  // cosas a tener en cuenta
+  // puntos que da un proyecto (uno puede ser mas grande que el resto)
+  // 
+  // podriamos meter personas en un map con dias disponibles
+	public List<AssignedProject> assignContributors(TupleProjectsContributors input) {
+	  final List<AssignedProject> assignedProjects = new ArrayList<>();
 		Set<Project> pending = input.getProjects();
-		Set<Contributor> available = input.getContributors();
-		Map<Integer, Set<Contributor>> willBeFreed = new HashMap<>();
+		final AvailableContributorContainer contributorContainer = new AvailableContributorContainer(input.getContributors());
+		Map<Integer, Set<BusyContributor>> willBeFreed = new HashMap<>();
 		int day = 0;
 		while(pending.size() > 0) {
-		  final Set<Contributor> contributorsToFree = willBeFreed.remove(day);
+		  System.out.println(pending.size());
+		  final Set<BusyContributor> contributorsToFree = willBeFreed.remove(day);
 		  if (contributorsToFree != null) {
-		    available.addAll(contributorsToFree);
+		    contributorsToFree.forEach(busyContributor -> {
+		      if (busyContributor.isGetSkillIncrease()) {
+		        final String skillName = busyContributor.getSkillUsed();
+		        final Map<String, Integer> skillsMap = busyContributor.getContributor().getSkills();
+		        skillsMap.put(skillName, skillsMap.get(skillName) + 1);
+		      }
+		    });
+		    contributorsToFree.stream().map(BusyContributor::getContributor).forEach(contributorContainer::addContributor);
 		  }
 		  
 			List<Project> projects = sortProjects(pending);
 			for (Project project: projects) {
-				Set<TupleAssignment> asignees = findContributorsFor(project, available);
+				Set<TupleAssignment> asignees = findContributorsFor(project, contributorContainer);
 				if (asignees.size() > 0) {
 					assignContributors(day, project, asignees, willBeFreed);
 					pending.remove(project);
 					final List<String> orderedContributors = asignees.stream()
 					    .sorted(Comparator.comparing(TupleAssignment::getIndex))
-					    .map(tuple -> tuple.getContributor().getName())
+					    .map(tuple -> tuple.getBusyContributor().getContributor().getName())
 					    .toList();
 					final AssignedProject assignedProject = new AssignedProject(project, orderedContributors);
 					assignedProjects.add(assignedProject);
 				}
 			}
+			if (willBeFreed.isEmpty()) {
+			  //projects.stream().forEach(p -> System.out.println("pending " + p.getSkillLevel() + " " + p.getRoles()));
+			  break;
+			}
 			day = willBeFreed.keySet().stream().min(Integer::compareTo).get();
 			
 		}
+		//System.out.println(contributorContainer.getWithSkillAndMinimumLevel("Parallelization-NET", 0));
+		//assignedProjects.forEach(p -> System.out.println("returning " + p.getProject().getSkillLevel() + " " + p.getProject().getRoles()));
 		return assignedProjects;
 	}
 
 	private List<Project> sortProjects(Set<Project> pending) {
-		return new ArrayList<>(pending);
+	  final int maxScore = pending.stream()
+	      .map(Project::getScore)
+	      .max(Comparator.naturalOrder())
+	      .get();
+	  return pending.stream()
+	      .sorted(Comparator.comparing(p -> this.getProjectSortScore(p, maxScore)))
+	      .toList();
+	}
+
+	private double getProjectSortScore(Project project, int maxScore) {
+	  //return (project.getScore() * 100) / maxScore;
+	  return  project.getSkillLevel();
 	}
 	
-	private Set<TupleAssignment> findContributorsFor(Project project, Set<Contributor> available) {
+	private Set<TupleAssignment> findContributorsFor(Project project, AvailableContributorContainer contributorContainer) {
 		Set<TupleAssignment> contributors = new HashSet<>();
-		for (Map.Entry<String, Role> entry: project.getRoles().entrySet()) {
-			Optional<TupleAssignment> assignment = findContributor(available, entry);
+		final int requiredNumberOfRoles = project.getRoles().size();
+		for (Role role: project.getRoles()) {
+			Optional<TupleAssignment> assignment = findContributor(contributorContainer, role);
 			if (assignment.isPresent()) {
-				available.remove(assignment.get().getContributor());
 				contributors.add(assignment.get());
 			}
 		}
-		return contributors;
+		if (contributors.size() == requiredNumberOfRoles) {
+		  return contributors;
+		} else {
+		  contributors.stream()
+		      .map(TupleAssignment::getBusyContributor)
+		      .map(BusyContributor::getContributor)
+		      .forEach(contributorContainer::addContributor);
+		  return Collections.emptySet();
+		}
+		
 	}
 	
-	private void assignContributors(Integer currentDay, Project project, Set<TupleAssignment> asignees, Map<Integer, Set<Contributor>> willBeFreed) {
+	private void assignContributors(Integer currentDay, Project project, Set<TupleAssignment> asignees, Map<Integer, Set<BusyContributor>> willBeFreed) {
 		Integer finishDay = currentDay + project.getLength();
 		if (willBeFreed.get(finishDay) == null) {
 			willBeFreed.put(finishDay, new HashSet<>());
 		}
-		willBeFreed.get(finishDay).addAll(asignees.stream().map(TupleAssignment::getContributor).collect(Collectors.toList()));
+		final List<BusyContributor> contributorsToAssign = asignees.stream()
+		    .map(TupleAssignment::getBusyContributor)
+		    .collect(Collectors.toList());
+		willBeFreed.get(finishDay).addAll(contributorsToAssign);
 	
 	}
 	
-	private Optional<TupleAssignment> findContributor(Set<Contributor> contributors, Map.Entry<String, Role> entry) {
-		for (Contributor contributor: contributors) {
-			if (contributor.getSkills().get(entry.getKey()) > entry.getValue().getRequiredLevel()) {
-				return Optional.of(new TupleAssignment(contributor, entry.getValue().getIndex()));
-			}
-		}
-		return Optional.empty();
+	private Optional<TupleAssignment> findContributor(AvailableContributorContainer contributorContainer, Role role) {
+	  final int requiredLevel = role.getRequiredLevel();
+	  return contributorContainer.getWithSkillAndMinimumLevel(role.getName(), requiredLevel)
+	      .map(contributor -> {
+	        final Integer contributorSkillLevelInteger = contributor.getSkills().get(role.getName());
+	        final int contributorSkillLevel = contributorSkillLevelInteger!= null ? contributorSkillLevelInteger : 0;
+	        final boolean getsIncrease = requiredLevel >= contributorSkillLevel;
+	        final BusyContributor busyContributor = new BusyContributor(contributor, getsIncrease, role.getName());
+            return new TupleAssignment(busyContributor, role.getIndex());
+	      });
 	}
 
 }
 
 @Value
 class TupleAssignment {
-	private Contributor contributor;
+	private BusyContributor busyContributor;
 	private Integer index;
+}
+
+@Value
+class BusyContributor {
+  Contributor contributor;
+  boolean getSkillIncrease;
+  String skillUsed;
 }

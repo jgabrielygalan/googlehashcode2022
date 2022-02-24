@@ -2,8 +2,10 @@ package jesus.gabriel.hashcode.files;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
@@ -47,7 +49,7 @@ public class FileReader {
             project.setBestBefore(bestBefore);
             project.setLength(numberOfDaysToComplete);
             project.setScore(projectScore);
-            final Map<String, Role> roles = new HashMap<>();
+            final List<Role> roles = new ArrayList<>();
             project.setRoles(roles);
             for(int roleId=0; roleId<numberOfRoles; roleId++) {
               final String skillName = sc.next();
@@ -57,7 +59,7 @@ public class FileReader {
               role.setIndex(roleId);
               role.setName(skillName);
               role.setRequiredLevel(skillLevel);
-              roles.put(skillName, role);
+              roles.add(role);
             }
             projects.add(project);
           }

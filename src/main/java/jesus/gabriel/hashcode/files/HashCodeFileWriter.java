@@ -2,16 +2,16 @@ package jesus.gabriel.hashcode.files;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Set;
+import java.util.List;
 import java.util.stream.Collectors;
 import jesus.gabriel.hashcode.model.AssignedProject;
 
 public class HashCodeFileWriter {
 
-	public void writeToOutputFile(String filePath, Set<AssignedProject> assignedProjects) {
+	public void writeToOutputFile(String filePath, List<AssignedProject> assignedProjects) {
 		try(final FileWriter fw = new FileWriter(filePath)) {
 		  final int size = assignedProjects.size();
-		  fw.write(size);
+		  fw.write(String.valueOf(size));
 		  fw.write("\n");
 		  assignedProjects.forEach(assignedProject -> {
 		    try {
