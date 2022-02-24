@@ -8,4 +8,5 @@ import lombok.Data;
 public class Contributor {
 	private String name;
 	private Map<String, Integer> skills;
+	boolean assigned;
 }

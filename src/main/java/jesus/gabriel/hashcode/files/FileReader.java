@@ -9,11 +9,12 @@ import java.util.Scanner;
 import java.util.Set;
 import jesus.gabriel.hashcode.model.Contributor;
 import jesus.gabriel.hashcode.model.Project;
-import jesus.gabriel.hashcode.photo.Photo;
+import jesus.gabriel.hashcode.model.TupleProjectsContributors;
 
 public class FileReader {
 
-	public Set<Photo> parseInputFile(File f) {
+	public TupleProjectsContributors parseInputFile(File f) {
+		TupleProjectsContributors input = new TupleProjectsContributors();
 		final Set<Contributor> contributors = new HashSet<>();
 		final Set<Project> projects = new HashSet<>();
 		try {
@@ -55,7 +56,9 @@ public class FileReader {
             projects.add(project);
           }
           sc.close();
-          return returnSet;
+          input.setProjects(projects);
+          input.setContributors(contributors);
+          return input;
       } catch (FileNotFoundException e) {
           // ignore
           throw new RuntimeException(e);
