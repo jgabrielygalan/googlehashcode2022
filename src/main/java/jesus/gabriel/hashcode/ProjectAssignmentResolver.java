@@ -4,14 +4,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
+import jesus.gabriel.hashcode.model.AssignedProject;
 import jesus.gabriel.hashcode.model.Contributor;
 import jesus.gabriel.hashcode.model.Project;
 import jesus.gabriel.hashcode.model.TupleProjectsContributors;
 
 public class ProjectAssignmentResolver {
 
-	public void assignContributors(TupleProjectsContributors input) {
+	public Set<AssignedProject> assignContributors(TupleProjectsContributors input) {
 		Set<Project> pending = input.getProjects();
 		Set<Contributor> available = input.getContributors();
 		Map<Integer, Set<Contributor>> willBeFreed = new HashMap<>();

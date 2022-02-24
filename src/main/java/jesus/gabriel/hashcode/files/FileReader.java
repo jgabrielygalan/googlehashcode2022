@@ -9,6 +9,7 @@ import java.util.Scanner;
 import java.util.Set;
 import jesus.gabriel.hashcode.model.Contributor;
 import jesus.gabriel.hashcode.model.Project;
+import jesus.gabriel.hashcode.model.Role;
 import jesus.gabriel.hashcode.model.TupleProjectsContributors;
 
 public class FileReader {
@@ -46,12 +47,17 @@ public class FileReader {
             project.setBestBefore(bestBefore);
             project.setLength(numberOfDaysToComplete);
             project.setScore(projectScore);
-            final Map<String, Integer> roles = new HashMap<>();
+            final Map<String, Role> roles = new HashMap<>();
             project.setRoles(roles);
             for(int roleId=0; roleId<numberOfRoles; roleId++) {
               final String skillName = sc.next();
               final int skillLevel = sc.nextInt();
-              roles.put(skillName, skillLevel);
+              
+              final Role role = new Role();
+              role.setIndex(roleId);
+              role.setName(skillName);
+              role.setRequiredLevel(skillLevel);
+              roles.put(skillName, role);
             }
             projects.add(project);
           }

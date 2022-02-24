@@ -10,5 +10,5 @@ public class Project {
 	private Integer length;
 	private Integer score;
 	private Integer bestBefore;
-	private Map<String, Integer> roles;
+	private Map<String, Role> roles;
 }
