@@ -24,12 +24,17 @@ public class ProjectAssignmentResolver {
   // 
   // podriamos meter personas en un map con dias disponibles
 	public List<AssignedProject> assignContributors(TupleProjectsContributors input) {
+	  final int allowedIterations = 100;
+	  int its = 0;
 	  final List<AssignedProject> assignedProjects = new ArrayList<>();
 		Set<Project> pending = input.getProjects();
 		final AvailableContributorContainer contributorContainer = new AvailableContributorContainer(input.getContributors());
 		Map<Integer, Set<BusyContributor>> willBeFreed = new HashMap<>();
 		int day = 0;
 		while(pending.size() > 0) {
+		  its++;
+		  if (its > allowedIterations)
+		    break;
 		  System.out.println(pending.size());
 		  final Set<BusyContributor> contributorsToFree = willBeFreed.remove(day);
 		  if (contributorsToFree != null) {
@@ -80,8 +85,8 @@ public class ProjectAssignmentResolver {
 	}
 
 	private double getProjectSortScore(Project project, int maxScore) {
-	  //return (project.getScore() * 100) / maxScore;
-	  return  project.getSkillLevel();
+	  return (project.getScore() * 100) / maxScore;
+	  //return  project.getSkillLevel();
 	}
 	
 	private Set<TupleAssignment> findContributorsFor(Project project, AvailableContributorContainer contributorContainer) {
