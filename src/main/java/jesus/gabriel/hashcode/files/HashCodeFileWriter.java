@@ -2,30 +2,29 @@ package jesus.gabriel.hashcode.files;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
-import jesus.gabriel.hashcode.photo.Photo;
-import jesus.gabriel.hashcode.photo.Slide;
-import jesus.gabriel.hashcode.photo.Slideshow;
+import jesus.gabriel.hashcode.model.AssignedProject;
 
 public class HashCodeFileWriter {
 
-	public void writeToOutputFile(String filePath, Slideshow slideshow) {
+	public void writeToOutputFile(String filePath, Set<AssignedProject> assignedProjects) {
 		try(final FileWriter fw = new FileWriter(filePath)) {
-			final List<Slide> slides = slideshow.slides;
-			fw.write(String.valueOf(slides.size()));
-			slides.stream().forEach(slide -> {
-				final String idString = slide.photos.stream()
-						.map(Photo::getId)
-						.map(String::valueOf)
-						.collect(Collectors.joining(" "));
-				try {
-					fw.write("\n");
-					fw.write(idString);
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			});
+		  final int size = assignedProjects.size();
+		  fw.write(size);
+		  fw.write("\n");
+		  assignedProjects.forEach(assignedProject -> {
+		    try {
+		    fw.write(assignedProject.getProject().getName());
+		    fw.write("\n");
+		    final String contributors = assignedProject.getOrderedContributorNames().stream()
+		    .collect(Collectors.joining(" "));
+		    fw.write(contributors);
+		    fw.write("\n");
+		    } catch(Exception ee) {
+		      throw new RuntimeException(ee);
+		    }
+		  });
 		} catch (IOException e) {
 			// ignore
 			e.printStackTrace();
